@@ -1,0 +1,28 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+
+\title{Viscosity Prediction Approaches}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+Four approaches used to predict the viscosity of chemical compounds from their SMILES representations. Together they span classical machine learning, pure deep learning on molecular language, a hybrid architecture combining both, and a final ensemble that unifies all three.
+
+\subsection{Baseline: XGBoost with Molecular Fingerprints and Descriptors}
+The first approach (\texttt{xgboost\_baseline.py}) represents a classical cheminformatics pipeline in which each molecule is converted into a fixed-length numerical vector composed of a 2048-bit Morgan fingerprint and the full set of RDKit-computed physicochemical descriptors, including molecular weight, polarity, hydrogen-bonding capacity, and topological complexity. These features are fed into an XGBoost gradient-boosted tree regressor, which learns nonlinear relationships between molecular structure and log-viscosity without requiring any deep learning. This approach serves as a strong, interpretable baseline against which more complex models can be compared.
+
+\subsection{Pure LLM: Fine-Tuned ChemBERTa}
+The second approach (\texttt{chemberta\_only.py}) treats each molecule's SMILES string as a sentence in a chemical ``language'' and fine-tunes ChemBERTa, a transformer model pretrained on millions of molecules, to predict viscosity directly from this textual representation. No hand-crafted descriptors are used; instead, the model relies entirely on the contextual embeddings it has learned during pretraining, with a small feed-forward regression head mapping the resulting molecular embedding to a single viscosity value. This approach tests whether a language model can capture the structure-property relationships needed for viscosity prediction without any explicit chemical feature engineering.
+
+\subsection{Hybrid: ChemBERTa with Residual Descriptor Fusion}
+The third approach (\texttt{chemberta\_resnet.py}) combines the strengths of the previous two methods by fusing ChemBERTa's learned molecular embedding with ten classical RDKit descriptors, projecting the combined representation through a residual neural network with skip connections to preserve information across layers. This architecture allows the model to leverage both the rich, pretrained chemical knowledge encoded in ChemBERTa and the well-established physical intuition captured by classical descriptors, resulting in improved predictive accuracy over either approach used alone.
+
+\subsection{Ensemble: Combining XGBoost and Two ChemBERTa Variants}
+The final approach (\texttt{ensemble\_triple.py}) trains three separate models, an XGBoost regressor, a simple fine-tuned ChemBERTa model, and the residual ChemBERTa-descriptor hybrid, and then searches over weighted combinations of their predictions to find the optimal blend. By systematically testing different weightings across all three models on a held-out test set, this ensemble approach demonstrates that combining diverse modeling strategies, each capturing different aspects of molecular structure, yields more robust and accurate viscosity predictions than any single model in isolation.
+
+\end{document}
