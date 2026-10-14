@@ -82,7 +82,7 @@ aitw-viscosity-surrogate xgboost inference \
 
 It will produce a CSV file containing the predicted log-viscosity values for the input compounds.
 
-> [!NOTE] Pre-trained model
+> [!NOTE]
 > The `xgboost_model.json` file included in the package was trained on the dataset provided in `examples/dataset.csv`. It's validation is shown [in this plot](./images/xgboost_train.png).
 
 ### 2. Pure LLM: Fine-Tuned ChemBERTa
