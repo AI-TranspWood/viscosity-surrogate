@@ -1,4 +1,4 @@
-"""AITW Monomer Infiltration Surrogate CLI commands"""
+"""AITW Monomer Viscosity Surrogate CLI commands"""
 import os
 
 import click as original_click
@@ -10,10 +10,10 @@ from trogon import tui
 
 @tui()
 @click.group()
-@click.version_option(package_name="aitw-monomer-surrogate", prog_name="AITW Monomer Surrogate")
+@click.version_option(package_name="aitw-viscosity-surrogate", prog_name="AITW Viscosity Surrogate")
 def cli():
     install(
-        show_locals=os.getenv('WOOD_MS_DEBUG', '0').lower() in ('1', 'true', 'yes'),
+        show_locals=os.getenv('AITW_VISCOSITY_SURROGATE_DEBUG', '0').lower() in ('1', 'true', 'yes'),
         suppress=[rich, click, original_click],
     )
 
