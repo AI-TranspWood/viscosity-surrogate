@@ -82,6 +82,9 @@ aitw-viscosity-surrogate xgboost inference \
 
 It will produce a CSV file containing the predicted log-viscosity values for the input compounds.
 
+> [!NOTE] Pre-trained model
+> The `xgboost_model.json` file included in the package was trained on the dataset provided in `examples/dataset.csv`. It's validation is shown [in this plot](./images/xgboost_train.png).
+
 ### 2. Pure LLM: Fine-Tuned ChemBERTa
 
 The second approach treats each molecule's SMILES string as a sentence in a chemical ``language'' and fine-tunes ChemBERTa, a transformer model pretrained on millions of molecules, to predict viscosity directly from this textual representation. No hand-crafted descriptors are used; instead, the model relies entirely on the contextual embeddings it has learned during pretraining, with a small feed-forward regression head mapping the resulting molecular embedding to a single viscosity value. This approach tests whether a language model can capture the structure-property relationships needed for viscosity prediction without any explicit chemical feature engineering.
