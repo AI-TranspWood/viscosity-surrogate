@@ -1,0 +1,104 @@
+[build-system]
+# build the package with [flit](https://flit.readthedocs.io)
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+# See https://www.python.org/dev/peps/pep-0621/
+name = "AITW_viscosity_surrogate"
+dynamic = ["version"]
+description = "Run model training and prediction for predicting the viscosity of molecules based on their SMILES representation."
+authors = [
+    {name = "Fahime Seyedheydari", email = "fahime.seyedheydari@aalto.fi"},
+    {name = "Marcin Mińkowski", email = "marcin.minkowski@aalto.fi"},
+    {name = "Davide Grassano", email = "davide.grassano@epfl.ch"},
+]
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python",
+]
+keywords = ["viscosity", "molecules", "SMILES", "surrogate model", "machine learning", "deep learning", "neural networks"]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "rdkit",
+    # ML/DL
+    "xgboost",
+    "torch",
+    "transformers",
+    "scikit-learn",
+    # CLI
+    "rich_click",
+    "trogon",
+]
+
+[project.urls]
+Source = "TODO: add source code URL"
+
+[project.optional-dependencies]
+tests = [
+    "pytest",
+]
+pre-commit = [
+    "pre-commit",
+    "pylint",
+]
+release = [
+    "flit"
+]
+
+[project.scripts]
+wood_ms = "aitw_viscosity_surrogate.cli:cli"
+
+[tool.flit.module]
+name = "aitw_viscosity_surrogate"
+
+[tool.flit.sdist]
+exclude = [
+    ".gitignore", ".github", ".pre-commit-config.yaml", "examples/",
+    "Dockerfile", "entrypoint.sh",
+    "docs/", "docs/*"
+    ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+log_cli = true
+
+[tool.pylint.main]
+load-plugins = [
+    # "pylint_pytest"
+]
+
+[tool.pylint.messages_control]
+disable = [
+    "invalid-name",
+    "protected-access",
+    "too-many-instance-attributes",
+    "broad-exception-caught",
+]
+
+
+[tool.pylint.format]
+max-line-length = 120
+good-names = [
+    "_",
+    "l", "r", "b", "t",
+    "l1", "r1", "b1", "t1",
+    "l2", "r2", "b2", "t2",
+    "i", "j",
+    "k", "v",
+    "f",
+]
+
+[tool.pylint.design]
+max-args = 10
+max-locals = 20
+max-attributes = 12
