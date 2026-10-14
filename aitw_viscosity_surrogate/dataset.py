@@ -229,10 +229,6 @@ def evaluate_model(y_true: np.ndarray, y_pred: np.ndarray):
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     r2 = r2_score(y_true, y_pred)
 
-    logger.info(f"Mean Absolute Error (MAE): {mae:.4f}")
-    logger.info(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
-    logger.info(f"R-squared (R2): {r2:.4f}")
-
     return mae, rmse, r2
 
 def print_predictions(df, test_idx, y_pred):

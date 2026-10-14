@@ -60,12 +60,13 @@ def train(
     test_y       = df["log_visc_exp"].iloc[test_idx].values.astype(np.float32)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = ChemBERTaViscosity(hidden=hidden, dropout=dropout)
-
+    model = ChemBERTaViscosity(model_name=model_name, hidden=hidden, dropout=dropout)
     logger.info(f"Loaded ChemBERTa model '{model_name}' with {sum(p.numel() for p in model.parameters()):,} parameters.")
+    logger.debug(f"Model architecture:\n{model}")
 
-    train_tokens = tokenizer(train_smiles, padding=True, truncation=True, return_tensors="pt")
-    test_tokens = tokenizer(test_smiles, padding=True, truncation=True, return_tensors="pt")
+
+    train_tokens = tokenizer(train_smiles, padding=True, truncation=True, return_tensors="pt", max_length=128)
+    test_tokens = tokenizer(test_smiles, padding=True, truncation=True, return_tensors="pt", max_length=128)
     train_y_t = torch.FloatTensor(train_y)
 
     logger.info(f"Training set: {len(train_idx)} molecules")
@@ -168,7 +169,7 @@ def inference(
     tokens = tokenizer(smiles_list, padding=True, truncation=True, return_tensors="pt", max_length=128)
     with torch.no_grad():
         log_v = model(tokens['input_ids'], tokens['attention_mask']).squeeze().numpy()
-    visc      = np.round(10**log_v, 4)
+    visc = np.round(10**log_v, 4)
 
     df["predicted_log_visc"] = log_v
     df["predicted_mPas"]     = visc
