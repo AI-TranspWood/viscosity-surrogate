@@ -72,6 +72,10 @@ The output of the training command contains the following files:
 #### Inference
 
 Inference can be ran using a pre-trained model included in the package or a custom model trained using the `train` command.
+The input file must be a CSV file containing the following columns:
+- `compound_name`: The name of the compound.
+- `SMILES`: The SMILES representation of the compound.
+- `visc_mPas_exp`: OPTIONAL. The reference viscosity of the compound in mPa·s. If provided, the error between predicted and reference values will be calculated and included in the output.
 
 ```bash
 aitw-viscosity-surrogate xgboost inference --help
@@ -94,6 +98,27 @@ The second approach treats each molecule's SMILES string as a sentence in a chem
 #### Training
 
 #### Inference
+
+Inference can be ran using a pre-trained model included in the package or a custom model trained using the `train` command.
+The input file must be a CSV file containing the following columns:
+- `compound_name`: The name of the compound.
+- `SMILES`: The SMILES representation of the compound.
+- `visc_mPas_exp`: OPTIONAL. The reference viscosity of the compound in mPa·s. If provided, the error between predicted and reference values will be calculated and included in the output.
+
+```bash
+aitw-viscosity-surrogate chemberta inference --help
+aitw-viscosity-surrogate chemberta inference \
+  --input-file examples/dataset.csv \
+  --output-file chemberta_predictions.csv
+```
+
+It will produce a CSV file containing the predicted log-viscosity values for the input compounds.
+
+The `chemberta_model_base.pt` file included in the package was trained on the dataset provided in `examples/dataset.csv`.
+<!-- It's validation is shown [in this plot](./images/chemberta_train.png). -->
+
+![ChemBERTa base training performance](./images/chemberta_train.png)
+
 
 ### 3. Hybrid: ChemBERTa with Residual Descriptor Fusion
 

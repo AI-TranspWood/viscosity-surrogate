@@ -87,3 +87,5 @@ def set_file_level(logger: logging.Logger, level: int) -> None:
     for handler in logger.handlers:
         if isinstance(handler, logging.FileHandler):
             handler.setLevel(level)
+
+MAIN_LOGGER = get_logger("aitw_viscosity_surrogate")

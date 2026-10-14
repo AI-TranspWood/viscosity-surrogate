@@ -1,5 +1,9 @@
 """AITW Monomer Viscosity Surrogate CLI commands"""
+import logging
+
+from .. import loggers as lg
 from .main import cli, click
+from .utils import verbose_map
 
 
 @cli.group()
@@ -21,9 +25,12 @@ def xgboost():
     help="Proportion of the dataset to use for the training set (between 0 and 1)."
 )
 @click.option("--random-state", "-r", type=int, default=42, help="Random seed for reproducibility.")
-def train(input_file, output_dir, train_size, random_state):
+@click.option('-v', '--verbose', help='Verbose output', count=True)
+def train(input_file, output_dir, train_size, random_state, verbose):
     """Train and evaluate an XGBoost model on the viscosity dataset."""
     from aitw_viscosity_surrogate.xgboost import train
+
+    lg.set_console_level(lg.MAIN_LOGGER, verbose_map.get(verbose, logging.DEBUG))
 
     # Train the model
     train(
@@ -45,12 +52,15 @@ def train(input_file, output_dir, train_size, random_state):
 )
 @click.option(
     "--output-file", "-o",
-    type=click.Path(), default="viscosity_predictions.csv",
+    type=click.Path(), default="xgboost_predictions.csv",
     help="Path to save the predictions CSV file."
 )
-def inference(input_file, model_file, output_file):
+@click.option('-v', '--verbose', help='Verbose output', count=True)
+def inference(input_file, model_file, output_file, verbose):
     """Run inference using a pre-trained XGBoost model."""
     from aitw_viscosity_surrogate.xgboost import inference
+
+    lg.set_console_level(lg.MAIN_LOGGER, verbose_map.get(verbose, logging.DEBUG))
 
     # Run inference
     inference(
