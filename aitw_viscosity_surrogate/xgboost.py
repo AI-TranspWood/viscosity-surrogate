@@ -1,7 +1,8 @@
 import os
-import warnings
+import sys
 from importlib import resources
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -145,6 +146,11 @@ def build_features(df: pd.DataFrame) -> np.ndarray:
 # Step 3: Plot
 # --------------------------------------------------------------------------- #
 def plot_predictions(y_test, y_pred, mae, rmse, r2, output_file="viscosity_performance.png"):
+    try:
+        matplotlib.use("Agg")  # Use non-interactive backend for plotting
+    except Exception as e:
+        logger.warning(f"Failed to set matplotlib backend to 'Agg': {e}. Plot will not be generated.")
+        return
     plt.figure(figsize=(7, 7))
     plt.scatter(y_test, y_pred, alpha=0.6, edgecolors="k", linewidths=0.5)
     lo = min(y_test.min(), y_pred.min()) - 0.1
@@ -162,7 +168,6 @@ def plot_predictions(y_test, y_pred, mae, rmse, r2, output_file="viscosity_perfo
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(output_file, dpi=150)
-    plt.show()
 
 
 # --------------------------------------------------------------------------- #
@@ -195,7 +200,8 @@ def train(
     ):
     """Train the XGBoost model on the dataset."""
     if os.path.exists(output_dir):
-        logger.warning(f"Output directory '{output_dir}' already exists. Files may be overwritten.")
+        logger.error(f"Output directory '{output_dir}' already exists. Files may be overwritten.")
+        sys.exit(1)
     os.makedirs(output_dir, exist_ok=True)
 
     logfile = os.path.join(output_dir, "training.log")

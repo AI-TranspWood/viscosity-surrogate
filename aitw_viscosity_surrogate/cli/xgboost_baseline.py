@@ -1,13 +1,4 @@
 """AITW Monomer Viscosity Surrogate CLI commands"""
-import math
-import os
-import sys
-from importlib import resources
-
-import numpy as np
-import pandas as pd
-
-from ..loggers import get_logger
 from .main import cli, click
 
 
@@ -32,7 +23,7 @@ def xgboost():
 @click.option("--random-state", "-r", type=int, default=42, help="Random seed for reproducibility.")
 def train(input_file, output_dir, train_size, random_state):
     """Train and evaluate an XGBoost model on the viscosity dataset."""
-    from ..xgboost import train
+    from aitw_viscosity_surrogate.xgboost import train
 
     # Train the model
     train(
@@ -53,17 +44,17 @@ def train(input_file, output_dir, train_size, random_state):
     help="Path to the pre-trained XGBoost model file (JSON format). If not provided, the default model included in the package will be used."
 )
 @click.option(
-    "--predictions-file", "-p",
+    "--output-file", "-o",
     type=click.Path(), default="viscosity_predictions.csv",
     help="Path to save the predictions CSV file."
 )
-def inference(input_file, model_file, predictions_file):
+def inference(input_file, model_file, output_file):
     """Run inference using a pre-trained XGBoost model."""
-    from ..xgboost import inference
+    from aitw_viscosity_surrogate.xgboost import inference
 
     # Run inference
     inference(
         input_file=input_file,
         model_file=model_file,
-        predictions_file=predictions_file,
+        predictions_file=output_file,
     )
