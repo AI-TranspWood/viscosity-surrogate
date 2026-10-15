@@ -178,6 +178,9 @@ def inference(
     from .models import get_descriptors
     from .xgboost import load_from_file as load_xgb_model
 
+    if xgb_model_file is None:
+        xgb_model_file = resources.files("aitw_viscosity_surrogate") / "xgboost_ensemble.json"
+
     model_xgb = load_xgb_model(xgb_model_file)
     model_chemberta_base, tokenizer = load_chemberta_model(chemberta_base_model_file)
     model_chemberta_residuals, _ = load_chemberta_residuals_model(chemberta_residuals_model_file)
