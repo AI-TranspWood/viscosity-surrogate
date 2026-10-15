@@ -184,6 +184,35 @@ The final approach trains three separate models, an XGBoost regressor, a simple 
 
 #### Training
 
+The training of all the three previous approaches will be performed in a single command.
+The only difference is that the XGBoost model will be trained using only the 10 descriptors used in the ChemBERTa residuals approach, instead of the full set of descriptors.
+
+```bash
+aitw-viscosity-surrogate chemberta train --help
+aitw-viscosity-surrogate chemberta train \
+  --input-file examples/dataset.csv
+```
+
+The output of the training command contains the files from the three previous approaches, plus the following files:
+
+- `{output_dir}/ensemble_config.json`: A JSON file containing the optimal weights for each model in the ensemble.
+- `{output_dir}/ensemble_performance.png`: A plot of predicted vs. experimental log-viscosity values for the ensemble on the training set.
+- `{output_dir}/ensemble_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the ensemble on the training set.
+
 #### Inference
 
+Inference can be ran using pre-trained models included in the package or custom models trained using the `train` command.
+The input file must be a CSV file containing the following columns:
+- `compound_name`: The name of the compound.
+- `SMILES`: The SMILES representation of the compound.
 
+```bash
+aitw-viscosity-surrogate ensemble inference --help
+aitw-viscosity-surrogate ensemble inference \
+  --input-file examples/dataset.csv \
+  --output-file ensemble_predictions.csv
+```
+
+The output CSV will contain the predicted log-viscosity and viscosity values with all models plus the ensemble prediction denoted with a suffix of `_ensemble`.
+
+![Ensemble training performance](./images/ensemble_train.png)
