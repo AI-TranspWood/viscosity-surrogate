@@ -1,6 +1,7 @@
 import os
 import sys
 from importlib import resources
+from typing import Callable
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -31,61 +32,6 @@ def load_data(input_file: str) -> pd.DataFrame:
     """
     data = pd.read_csv(input_file)
     return data
-
-def get_fingerprint(smiles: str, size: int = 2048) -> np.ndarray:
-    """Morgan fingerprint — captures circular molecular patterns."""
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        return np.zeros(size, dtype=np.float32)
-    fp = np.zeros(size, dtype=np.float32)
-    Chem.DataStructs.ConvertToNumpyArray(
-        AllChem.GetMorganGenerator(radius=2, fpSize=size).GetFingerprint(mol), fp
-    )
-    return fp
-
-
-def build_features(df: pd.DataFrame) -> np.ndarray:
-    """
-    Build feature matrix:
-      - Morgan fingerprint: 2048 bits
-      - All RDKit descriptors: ~214 values
-      Total: ~2262 features per molecule
-    """
-    logger.info("Building features...")
-
-    # get descriptor names from first molecule
-    _, desc_names = get_all_descriptors(df["SMILES"].iloc[0])
-
-    fingerprints = []
-    descriptors  = []
-
-    for smi in df["SMILES"]:
-        fp          = get_fingerprint(smi)
-        desc, _     = get_all_descriptors(smi)
-        fingerprints.append(fp)
-        descriptors.append(desc)
-
-    fingerprints = np.array(fingerprints)
-    descriptors  = np.array(descriptors)
-
-
-    descriptors = np.where(np.isfinite(descriptors), descriptors, np.nan)
-
-    # replace nan with column median
-    for col in range(descriptors.shape[1]):
-        col_data = descriptors[:, col]
-        median   = np.nanmedian(col_data)
-        descriptors[:, col] = np.where(np.isnan(col_data), median, col_data)
-
-    # combine
-    X = np.concatenate([fingerprints, descriptors], axis=1)
-
-    logger.info(f"  Fingerprints:  {fingerprints.shape[1]} bits")
-    logger.info(f"  Descriptors:   {descriptors.shape[1]} values")
-    logger.info(f"  Total:         {X.shape[1]} features")
-    logger.info(f"  Molecules:     {X.shape[0]}")
-
-    return X
 
 # --------------------------------------------------------------------------- #
 # Step 2: Convert molecule to numbers
@@ -124,7 +70,7 @@ def get_all_descriptors(smiles: str) -> np.ndarray:
 
     # compute all descriptors
     values = []
-    names  = []
+    # names  = []
     for name, func in Descriptors._descList:
         # skip fingerprint density — not useful
         if name in {"FpDensityMorgan1",
@@ -134,14 +80,16 @@ def get_all_descriptors(smiles: str) -> np.ndarray:
         try:
             val = func(mol)
             values.append(val)
-            names.append(name)
+            # names.append(name)
         except:
             values.append(np.nan)
-            names.append(name)
+            # names.append(name)
 
-    return np.array(values, dtype=np.float32), names
+    return np.array(values, dtype=np.float32)
+    # return np.array(values, dtype=np.float32), names
 
-def get_fingerprint(smiles: str, size: int = 2048) -> np.ndarray:
+
+def get_fingerprint_morgan(smiles: str, size: int = 2048) -> np.ndarray:
     """Morgan fingerprint — captures circular molecular patterns."""
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
@@ -153,7 +101,11 @@ def get_fingerprint(smiles: str, size: int = 2048) -> np.ndarray:
     return fp
 
 
-def build_features(df: pd.DataFrame) -> np.ndarray:
+def build_xgboost_features(
+        df: pd.DataFrame,
+        desc_func: Callable[[str], np.ndarray] = get_all_descriptors,
+        fp_func: Callable[[str], np.ndarray] = get_fingerprint_morgan,
+    ) -> np.ndarray:
     """
     Build feature matrix:
       - Morgan fingerprint: 2048 bits
@@ -162,15 +114,12 @@ def build_features(df: pd.DataFrame) -> np.ndarray:
     """
     logger.info("Building features...")
 
-    # get descriptor names from first molecule
-    _, desc_names = get_all_descriptors(df["SMILES"].iloc[0])
-
     fingerprints = []
     descriptors  = []
 
     for smi in df["SMILES"]:
-        fp          = get_fingerprint(smi)
-        desc, _     = get_all_descriptors(smi)
+        fp = fp_func(smi)
+        desc = desc_func(smi)
         fingerprints.append(fp)
         descriptors.append(desc)
 

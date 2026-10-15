@@ -4,24 +4,23 @@ import os
 import pandas as pd
 from click.testing import CliRunner
 
+# def test_cli_xgboost_existing_output_dir(dataset_file_path, tmpdir, caplog):
+#     """Test the CLI train command with an existing output directory."""
+#     from aitw_viscosity_surrogate.cli import cli
 
-def test_cli_xgboost_existing_output_dir(dataset_file_path, tmpdir, caplog):
-    """Test the CLI train command with an existing output directory."""
-    from aitw_viscosity_surrogate.cli import cli
+#     tmp_output_dir = tmpdir / "output"
+#     os.makedirs(tmp_output_dir)
 
-    tmp_output_dir = tmpdir / "output"
-    os.makedirs(tmp_output_dir)
+#     runner = CliRunner()
+#     with caplog.at_level("WARNING"):
+#         result = runner.invoke(cli, [
+#             'xgboost', 'train',
+#             '--input-file', dataset_file_path,
+#             '--output-dir', str(tmp_output_dir),
+#         ])
 
-    runner = CliRunner()
-    with caplog.at_level("WARNING"):
-        result = runner.invoke(cli, [
-            'xgboost', 'train',
-            '--input-file', dataset_file_path,
-            '--output-dir', str(tmp_output_dir),
-        ])
-
-    assert result.exit_code == 1
-    assert 'already exists' in caplog.text
+#     assert result.exit_code == 1
+#     assert 'already exists' in caplog.text
 
 
 def test_cli_xgboost_train_and_inference(dataset_file_path, tmpdir):

@@ -4,27 +4,26 @@ import os
 import pandas as pd
 from click.testing import CliRunner
 
+# def test_cli_chemberta_base_existing_output_dir(dataset_file_path, tmpdir, caplog):
+#     """Test the CLI train command with an existing output directory."""
+#     from aitw_viscosity_surrogate.cli import cli
 
-def test_cli_chemberta_existing_output_dir(dataset_file_path, tmpdir, caplog):
-    """Test the CLI train command with an existing output directory."""
-    from aitw_viscosity_surrogate.cli import cli
+#     tmp_output_dir = tmpdir / "output"
+#     os.makedirs(tmp_output_dir)
 
-    tmp_output_dir = tmpdir / "output"
-    os.makedirs(tmp_output_dir)
+#     runner = CliRunner()
+#     with caplog.at_level("WARNING"):
+#         result = runner.invoke(cli, [
+#             'chemberta', 'train',
+#             '--input-file', dataset_file_path,
+#             '--output-dir', str(tmp_output_dir),
+#         ])
 
-    runner = CliRunner()
-    with caplog.at_level("WARNING"):
-        result = runner.invoke(cli, [
-            'chemberta', 'train',
-            '--input-file', dataset_file_path,
-            '--output-dir', str(tmp_output_dir),
-        ])
-
-    assert result.exit_code == 1
-    assert 'already exists' in caplog.text
+#     assert result.exit_code == 1
+#     assert 'already exists' in caplog.text
 
 
-def test_cli_chemberta_train_and_inference(dataset_file_path, tmpdir):
+def test_cli_chemberta_base_train_and_inference(dataset_file_path, tmpdir):
     """Test the CLI train command."""
     from aitw_viscosity_surrogate.cli import cli
 
@@ -59,7 +58,7 @@ def test_cli_chemberta_train_and_inference(dataset_file_path, tmpdir):
         'compound_name', 'SMILES', 'predicted_log_visc', 'predicted_mPas'
     ])
 
-def test_cli_chemberta_inference_with_default_weights(dataset_file_path, tmpdir):
+def test_cli_chemberta_base_inference_with_default_weights(dataset_file_path, tmpdir):
     """Test the CLI inference command with default weights."""
     from aitw_viscosity_surrogate.cli import cli
 

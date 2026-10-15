@@ -4,7 +4,6 @@ import sys
 from importlib import resources
 
 import numpy as np
-import pandas as pd
 
 from . import dataset as dst
 from . import defaults as defs
@@ -29,8 +28,7 @@ def train(
     ):
     """Fine-tune ChemBERTa on the dataset."""
     if os.path.exists(output_dir):
-        logger.error(f"Output directory '{output_dir}' already exists. Files may be overwritten.")
-        sys.exit(1)
+        logger.warning(f"Output directory '{output_dir}' already exists. Files may be overwritten.")
     os.makedirs(output_dir, exist_ok=True)
 
     # Defer heavy imports as late as possible to avoid unnecessary overhead when the CLI is invoked
@@ -43,17 +41,16 @@ def train(
     torch.manual_seed(random_state)
     np.random.seed(random_state)
 
-    logfile = os.path.join(output_dir, "training.log")
-    plot_file = os.path.join(output_dir, "viscosity_performance.png")
-    indexes_file = os.path.join(output_dir, "train_test_indexes.json")
-    predictions_file = os.path.join(output_dir, "viscosity_predictions.csv")
+    logfile = os.path.join(output_dir, "chemberta_base_training.log")
+    plot_file = os.path.join(output_dir, "chemberta_base_performance.png")
+    indexes_file = os.path.join(output_dir, "chemberta_base_indexes.json")
+    predictions_file = os.path.join(output_dir, "chemberta_base_predictions.csv")
     model_file = os.path.join(output_dir, "chemberta_model_base.pt")
 
     lg.add_file_handler(logger, logfile)
-    # lg.set_console_level(logger, "INFO")
-
+    
     # 1. Load
-    df = pd.read_csv(input_file)
+    df = dst.load_data(input_file)
 
     # 2. Split
     train_idx, test_idx = dst.split_dataset(df, train_size=train_size, random_state=random_state)
@@ -80,6 +77,9 @@ def train(
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     loss_fn   = nn.MSELoss()
 
+    best_loss = float('inf')
+    best_state = None
+
     for epoch in range(epochs):
         model.train()
         total_loss = 0
@@ -101,6 +101,10 @@ def train(
             n_batches  += 1
         scheduler.step()
 
+        if total_loss < best_loss:
+            best_loss = total_loss
+            best_state = {k: v.clone() for k, v in model.state_dict().items()}
+
         if (epoch + 1) % 10 == 0:
             model.eval()
             with torch.no_grad():
@@ -114,6 +118,7 @@ def train(
                 f"Test MAE: {mae:.4f}"
             )
     # Final evaluation
+    model.load_state_dict(best_state)
     model.eval()
     with torch.no_grad():
         test_pred = model(
@@ -141,24 +146,22 @@ def train(
     logger.info(f"Model saved to '{model_file}'")
     logger.info(f"Train/test indexes saved to '{indexes_file}'")
 
+    res = {
+        "mae": mae,
+        "rmse": rmse,
+        "r2": r2,
+        "model": model,
+        "pred": test_pred,
+        "test_y": test_y,
+        "test_idx": test_idx,
+    }
+    return res
 
-def inference(
-        input_file: str,
-        model_file: str = None,
-        predictions_file: str = "viscosity_inference.csv",
-    ):
-    """Run inference using a pre-trained ChemBERTa model."""
+
+def load_from_file(model_file: str):
+    """Load a ChemBERTa model from a file."""
     if model_file is None:
-        with resources.path("aitw_viscosity_surrogate", "chemberta_model_base.pt") as path:
-            model_file = str(path)
-            logger.debug(f"No model file provided. Using default model: '{model_file}'")
-
-    if os.path.exists(predictions_file):
-        logger.error(f"Predictions file '{predictions_file}' already exists. Please specify a different output file.")
-        sys.exit(1)
-    basedir = os.path.dirname(predictions_file)
-    if basedir:
-        os.makedirs(basedir, exist_ok=True)
+        model_file = resources.files("aitw_viscosity_surrogate") / "chemberta_model_base.pt"
 
     # Defer heavy imports as late as possible to avoid unnecessary overhead when the CLI is invoked
     import torch
@@ -166,10 +169,6 @@ def inference(
 
     from .models import ChemBERTaViscosity
 
-    df = pd.read_csv(input_file)
-    smiles_list = df["SMILES"].tolist()
-
-    tokenizer = AutoTokenizer.from_pretrained(defs.DEFAULT_MODEL_NAME)
     checkpoint = torch.load(model_file, weights_only=False)
     if 'model_name' not in checkpoint:
         logger.error(f"Loaded model checkpoint is not a valid dictionary with 'model_name'.")
@@ -179,6 +178,32 @@ def inference(
     model = ChemBERTaViscosity(model_name=model_name)
     model.load_state_dict(state_dict)
     model.eval()
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    logger.info(f"Loaded ChemBERTa model from '{model_file}' with {sum(p.numel() for p in model.parameters()):,} parameters.")
+
+    return model, tokenizer
+
+
+def inference(
+        input_file: str,
+        model_file: str = None,
+        predictions_file: str = "viscosity_inference.csv",
+    ):
+    """Run inference using a pre-trained ChemBERTa model."""
+    import torch
+
+    if os.path.exists(predictions_file):
+        logger.warning(f"Predictions file '{predictions_file}' already exists. Files may be overwritten.")
+    basedir = os.path.dirname(predictions_file)
+    if basedir:
+        os.makedirs(basedir, exist_ok=True)
+
+    df = dst.load_data(input_file)
+    smiles_list = df["SMILES"].tolist()
+
+    model, tokenizer = load_from_file(model_file)
 
     tokens = tokenizer(smiles_list, padding=True, truncation=True, return_tensors="pt", max_length=128)
     with torch.no_grad():

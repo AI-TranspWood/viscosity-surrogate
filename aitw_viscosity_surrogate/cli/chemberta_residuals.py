@@ -67,7 +67,7 @@ def train(
 @click.option(
     "--model-file", "-m",
     type=click.Path(exists=True), default=None,
-    help="Path to the pre-trained ChemBERTa model file (PyTorch .pt format). If not provided, the default model included in the package will be used."
+    help="Path to the pre-trained ChemBERTa model file (PyTorch .pt format) with residuals. If not provided, the default model included in the package will be used."
 )
 @click.option(
     "--output-file", "-o",

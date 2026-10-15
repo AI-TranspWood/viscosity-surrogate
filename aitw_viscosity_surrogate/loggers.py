@@ -33,6 +33,8 @@ def add_file_handler(logger: logging.Logger, output_file: str = None) -> None:
     """
     if output_file is None:
         return
+    if any(isinstance(h, logging.FileHandler) for h in logger.handlers):
+        return
     # Create a file handler for logging to a file
     file_handler = logging.FileHandler(output_file)
     file_handler.setLevel(logging.DEBUG)
@@ -44,8 +46,7 @@ def add_file_handler(logger: logging.Logger, output_file: str = None) -> None:
     file_handler.setFormatter(file_formatter)
 
     # Add the file handler to the logger
-    if not any(isinstance(h, logging.FileHandler) for h in logger.handlers):
-        logger.addHandler(file_handler)
+    logger.addHandler(file_handler)
 
 
 def get_logger(name: str, output_file: str = None) -> logging.Logger:

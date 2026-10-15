@@ -1,9 +1,8 @@
+import json
 import os
 import sys
 from importlib import resources
 
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import xgboost as xgb
 
@@ -18,17 +17,21 @@ def train(
         train_size: float = 0.8,
         random_state: int = 42,
         output_dir: str = "xgboost_baseline_output",
+        desc_func=dst.get_all_descriptors,
+        fp_func=dst.get_fingerprint_morgan,
     ):
     """Train the XGBoost model on the dataset."""
     if os.path.exists(output_dir):
-        logger.error(f"Output directory '{output_dir}' already exists. Files may be overwritten.")
-        sys.exit(1)
+        logger.warning(f"Output directory '{output_dir}' already exists. Files may be overwritten.")
     os.makedirs(output_dir, exist_ok=True)
 
-    logfile = os.path.join(output_dir, "training.log")
-    plot_file = os.path.join(output_dir, "viscosity_performance.png")
-    predictions_file = os.path.join(output_dir, "viscosity_predictions.csv")
+    np.random.seed(random_state)
+
+    logfile = os.path.join(output_dir, "xgboost_training.log")
+    plot_file = os.path.join(output_dir, "xgboost_performance.png")
+    predictions_file = os.path.join(output_dir, "xgboost_predictions.csv")
     model_file = os.path.join(output_dir, "xgboost_model.json")
+    indexes_file = os.path.join(output_dir, "xgboost_indexes.json")
 
     lg.add_file_handler(logger, logfile)
 
@@ -36,7 +39,7 @@ def train(
     df = dst.load_data(input_file)
 
     # 2. Build features
-    X = dst.build_features(df)
+    X = dst.build_xgboost_features(df, desc_func=desc_func, fp_func=fp_func)
     y = df["log_visc_exp"].values
 
     # 3. Split
@@ -84,6 +87,37 @@ def train(
     model.save_model(model_file)
     logger.info(f"Model saved to {model_file}")
 
+    indexes = {
+        "train_idx": train_idx.tolist(),
+        "test_idx": test_idx.tolist()
+    }
+    with open(indexes_file, "w") as f:
+        json.dump(indexes, f, indent=4)
+    logger.info(f"Train/test indexes saved to {indexes_file}")
+
+    res = {
+        "mae": mae_te,
+        "rmse": rmse_te,
+        "r2": r2_te,
+        "model": model,
+        "pred": y_pred,
+        "test_y": y_test,
+        "test_idx": test_idx,
+    }
+    return res
+
+
+def load_from_file(model_file: str):
+    """Load a pre-trained XGBoost model from a file."""
+    if model_file is None:
+        model_file = resources.files("aitw_viscosity_surrogate") / "xgboost_model.json"
+
+    model = xgb.XGBRegressor()
+    model.load_model(model_file)
+
+    logger.info(f"Loaded XGBoost model from {model_file}")
+
+    return model
 
 def inference(
         input_file: str,
@@ -91,16 +125,8 @@ def inference(
         predictions_file: str = "viscosity_inference.csv"
     ):
     """Run inference using a pre-trained XGBoost model."""
-    if model_file is None:
-        with resources.path("aitw_viscosity_surrogate", "xgboost_model.json") as path:
-            model_file = str(path)
-            logger.debug(f"No model file provided. Using default model: '{model_file}'")
-
-    print(f"Using model file: {model_file} {type(model_file)}")
-
     if os.path.exists(predictions_file):
-        logger.error(f"Predictions file '{predictions_file}' already exists. Please specify a different output file.")
-        sys.exit(1)
+        logger.error(f"Predictions file '{predictions_file}' already exists. Files may be overwritten.")
     basedir = os.path.dirname(predictions_file)
     if basedir:
         os.makedirs(basedir, exist_ok=True)
@@ -109,12 +135,10 @@ def inference(
     df = dst.load_data(input_file)
 
     # 2. Build features
-    X = dst.build_features(df)
+    X = dst.build_xgboost_features(df)
 
     # 3. Load model
-    model = xgb.XGBRegressor()
-    model.load_model(model_file)
-    logger.info(f"Loaded model from {model_file}")
+    model = load_from_file(model_file)
 
     # 4. Predict
     y_pred = model.predict(X)

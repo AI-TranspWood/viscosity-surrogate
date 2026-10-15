@@ -4,7 +4,6 @@ import sys
 from importlib import resources
 
 import numpy as np
-import pandas as pd
 
 from . import dataset as dst
 from . import defaults as defs
@@ -29,8 +28,7 @@ def train(
     ):
     """Fine-tune custom ChemBERTa model with residuals on the dataset."""
     if os.path.exists(output_dir):
-        logger.error(f"Output directory '{output_dir}' already exists. Files may be overwritten.")
-        sys.exit(1)
+        logger.warning(f"Output directory '{output_dir}' already exists. Files may be overwritten.")
     os.makedirs(output_dir, exist_ok=True)
 
     # Defer heavy imports as late as possible to avoid unnecessary overhead when the CLI is invoked
@@ -44,16 +42,16 @@ def train(
     torch.manual_seed(random_state)
     np.random.seed(random_state)
 
-    logfile = os.path.join(output_dir, "training.log")
-    plot_file = os.path.join(output_dir, "viscosity_performance.png")
-    indexes_file = os.path.join(output_dir, "train_test_indexes.json")
-    predictions_file = os.path.join(output_dir, "viscosity_predictions.csv")
+    logfile = os.path.join(output_dir, "chemberta_residuals_training.log")
+    plot_file = os.path.join(output_dir, "chemberta_residuals_performance.png")
+    indexes_file = os.path.join(output_dir, "chemberta_residuals_indexes.json")
+    predictions_file = os.path.join(output_dir, "chemberta_residuals_predictions.csv")
     model_file = os.path.join(output_dir, "chemberta_model_residuals.pt")
 
     lg.add_file_handler(logger, logfile)
 
     # 1. Load
-    df = pd.read_csv(input_file)
+    df = dst.load_data(input_file)
 
     # 2. Split
     train_idx, test_idx = dst.split_dataset(df, train_size=train_size, random_state=random_state)
@@ -170,13 +168,20 @@ def train(
     logger.info(f"Model saved to '{model_file}'")
     logger.info(f"Train/test indexes saved to '{indexes_file}'")
 
+    res = {
+        "mae": mae,
+        "rmse": rmse,
+        "r2": r2,
+        "model": model,
+        "pred": test_pred,
+        "test_y": test_y,
+        "test_idx": test_idx,
+    }
+    return res
 
-def inference(
-        input_file: str,
-        model_file: str = None,
-        predictions_file: str = "viscosity_inference.csv",
-    ):
-    """Run inference using a pre-trained ChemBERTa model with residuals."""
+
+def load_from_file(model_file: str):
+    """Load a pre-trained ChemBERTa model with residuals from a file."""
     if model_file is None:
         model_file = resources.files("aitw_viscosity_surrogate") / "chemberta_model_residuals.pt"
 
@@ -184,12 +189,8 @@ def inference(
     import torch
     from transformers import AutoTokenizer
 
-    from .models import ChemBERTaResidual, get_descriptors
+    from .models import ChemBERTaResidual
 
-    df = pd.read_csv(input_file)
-    smiles_list = df["SMILES"].tolist()
-
-    tokenizer = AutoTokenizer.from_pretrained(defs.DEFAULT_MODEL_NAME)
     checkpoint = torch.load(model_file, weights_only=False)
     if 'scaler' not in checkpoint:
         logger.error(f"Loaded model checkpoint is not a valid dictionary with 'scaler'.")
@@ -202,6 +203,35 @@ def inference(
     model = ChemBERTaResidual(model_name=model_name, scaler=scaler)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
+    logger.info(f"Loaded ChemBERTa model with residuals '{model_name}' from '{model_file}'")
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    logger.info(f"Loaded ChemBERTa+residuals model from '{model_file}' with {sum(p.numel() for p in model.parameters()):,} parameters.")
+
+    return model, tokenizer
+
+
+def inference(
+        input_file: str,
+        model_file: str = None,
+        predictions_file: str = "viscosity_inference.csv",
+    ):
+    """Run inference using a pre-trained ChemBERTa model with residuals."""
+    import torch
+
+    from .models import get_descriptors
+
+    if os.path.exists(predictions_file):
+        logger.warning(f"Predictions file '{predictions_file}' already exists. Files may be overwritten.")
+    basedir = os.path.dirname(predictions_file)
+    if basedir:
+        os.makedirs(basedir, exist_ok=True)
+
+    df = dst.load_data(input_file)
+    smiles_list = df["SMILES"].tolist()
+
+    model, tokenizer = load_from_file(model_file)
 
     tokens = tokenizer(smiles_list, padding=True, truncation=True, return_tensors="pt", max_length=128)
     desc = np.array([get_descriptors(s) for s in smiles_list], dtype=np.float32)

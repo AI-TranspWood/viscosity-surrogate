@@ -68,9 +68,9 @@ aitw-viscosity-surrogate xgboost train \
 The output of the training command contains the following files:
 
 - `{output_dir}/xgboost_model.json`: The trained XGBoost model in JSON format.
-- `{output_dir}/viscosity_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
-- `{output_dir}/viscosity_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
-- `{output_dir}/training.log`: A log file containing the training process.
+- `{output_dir}/xgboost_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
+- `{output_dir}/xgboost_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
+- `{output_dir}/xgboost_training.log`: A log file containing the training process.
 
 #### Inference
 
@@ -109,10 +109,10 @@ aitw-viscosity-surrogate chemberta train \
 The output of the training command contains the following files:
 
 - `{output_dir}/chemberta_model_base.pt`: The trained ChemBERTa model in PyTorch format. This will be a dictionary containing the `model_state_dict` and the ChemBERTa model name used for training (`model_name`).
-- `{output_dir}/viscosity_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
-- `{output_dir}/viscosity_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
-- `{output_dir}/training.log`: A log file containing the training process.
-- `{output_dir}/train_test_indexes.json`: A JSON file containing the indexes of the training and test sets used for training and validation.
+- `{output_dir}/chemberta_base_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
+- `{output_dir}/chemberta_base_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
+- `{output_dir}/chemberta_base_training.log`: A log file containing the training process.
+- `{output_dir}/chemberta_base_indexes.json`: A JSON file containing the indexes of the training and test sets used for training and validation.
 
 #### Inference
 
@@ -151,10 +151,10 @@ aitw-viscosity-surrogate chemberta-residuals train \
 The output of the training command contains the following files:
 
 - `{output_dir}/chemberta_model_residuals.pt`: The trained ChemBERTa model in PyTorch format. This will be a dictionary containing the `model_state_dict`, the ChemBERTa model name used for training (`model_name`) and the scaler (`scaler`).
-- `{output_dir}/viscosity_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
-- `{output_dir}/viscosity_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
-- `{output_dir}/training.log`: A log file containing the training process.
-- `{output_dir}/train_test_indexes.json`: A JSON file containing the indexes of the training and test sets used for training and validation.
+- `{output_dir}/chemberta_residuals_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
+- `{output_dir}/chemberta_residuals_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
+- `{output_dir}/chemberta_residuals_training.log`: A log file containing the training process.
+- `{output_dir}/chemberta_residuals_indexes.json`: A JSON file containing the indexes of the training and test sets used for training and validation.
 
 #### Inference
 

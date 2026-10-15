@@ -21,6 +21,9 @@ class ChemBERTaViscosity(nn.Module):
             # dropout: float = defs.DEFAULT_DROPOUT,
         ):
         super().__init__()
+
+        self.model_name = model_name
+
         hidden = defs.DEFAULT_HIDDEN
         dropout = defs.DEFAULT_DROPOUT
         self.chemberta = AutoModel.from_pretrained(model_name)
@@ -108,6 +111,8 @@ class ChemBERTaResidual(nn.Module):
             # n_res_blocks: int = defs.DEFAULT_N_RES_BLOCKS,
         ):
         super().__init__()
+
+        self.model_name = model_name
 
         hidden = defs.DEFAULT_HIDDEN_DIM
         dropout = defs.DEFAULT_DROPOUT
