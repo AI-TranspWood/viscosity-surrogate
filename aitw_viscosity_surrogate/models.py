@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from rdkit import Chem
 from rdkit.Chem import Descriptors
+from sklearn.preprocessing import StandardScaler
 from transformers import AutoModel
 
 from . import defaults as defs
@@ -98,6 +99,8 @@ class ChemBERTaResidual(nn.Module):
     def __init__(
             self,
             model_name: str = defs.DEFAULT_MODEL_NAME,
+            scaler: StandardScaler = None,
+            # logger=None,
             # hidden: int = defs.DEFAULT_HIDDEN_DIM,
             # dropout: float = defs.DEFAULT_DROPOUT,
             # combined_dim: int = defs.DEFAULT_COMBINED_DIM,
@@ -146,14 +149,23 @@ class ChemBERTaResidual(nn.Module):
             nn.Linear(64, 1),
         )
 
+        if scaler is None:
+            scaler = StandardScaler()
+        self.scaler = scaler
+
     def forward(self, input_ids, attention_mask, descriptors):
+        if isinstance(descriptors, torch.FloatTensor):
+            desc_scaled = self.scaler.transform(descriptors.detach().numpy())
+        else:
+            desc_scaled = self.scaler.transform(descriptors)
+        desc_scaled_t = torch.FloatTensor(desc_scaled)
         # PATH 1: LLM reads SMILES
         llm_out   = self.chemberta(input_ids=input_ids,
                                    attention_mask=attention_mask)
         cls_token = llm_out.last_hidden_state[:, 0, :]  # 384 numbers
 
         # PATH 2: process classical descriptors
-        desc_out  = self.desc_processor(descriptors)    # 10 numbers
+        desc_out  = self.desc_processor(desc_scaled_t)    # 10 numbers
 
         # COMBINE both paths
         combined  = torch.cat([cls_token, desc_out], dim=1)  # 394 numbers

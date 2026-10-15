@@ -40,8 +40,6 @@ def test_cli_chemberta_res_train_and_inference(dataset_file_path, tmpdir):
         '--batch-size', '4',
     ])
 
-    print(result.output)
-    print(result.exception)
     assert result.exit_code == 0
     assert os.path.exists(output_weights_file)
 
@@ -50,17 +48,9 @@ def test_cli_chemberta_res_train_and_inference(dataset_file_path, tmpdir):
         'chemberta-residuals', 'inference',
         '--input-file', dataset_file_path,
         '--model-file', output_weights_file,
-        '--scaler-file', os.path.join(tmp_output_dir, "chemberta_residual_scaler.save"),
         '--output-file', inference_results,
     ])
 
-    print(result.output)
-    print(result.exception)
-    if result.exit_code != 0:
-        print("Error during inference:")
-        print(result.output)
-        print(result.exception)
-        raise result.exception
     assert result.exit_code == 0
     assert os.path.exists(inference_results)
 
@@ -69,24 +59,22 @@ def test_cli_chemberta_res_train_and_inference(dataset_file_path, tmpdir):
         'compound_name', 'SMILES', 'predicted_log_visc', 'predicted_mPas'
     ])
 
-# def test_cli_chemberta_res_inference_with_default_weights(dataset_file_path, tmpdir):
-#     """Test the CLI inference command with default weights."""
-#     from aitw_viscosity_surrogate.cli import cli
+def test_cli_chemberta_res_inference_with_default_weights(dataset_file_path, tmpdir):
+    """Test the CLI inference command with default weights."""
+    from aitw_viscosity_surrogate.cli import cli
 
-#     runner = CliRunner()
-#     inference_results = os.path.join(tmpdir, 'inference_results.csv')
-#     result = runner.invoke(cli, [
-#         'chemberta-residuals', 'inference',
-#         '--input-file', dataset_file_path,
-#         '--output-file', inference_results,
-#     ])
+    runner = CliRunner()
+    inference_results = os.path.join(tmpdir, 'inference_results.csv')
+    result = runner.invoke(cli, [
+        'chemberta-residuals', 'inference',
+        '--input-file', dataset_file_path,
+        '--output-file', inference_results,
+    ])
 
-#     print(result.output)
-#     print(result.exception)
-#     assert result.exit_code == 0
-#     assert os.path.exists(inference_results)
+    assert result.exit_code == 0
+    assert os.path.exists(inference_results)
 
-#     inference_results_df = pd.read_csv(inference_results)
-#     assert all(col in inference_results_df.columns for col in [
-#         'compound_name', 'SMILES', 'predicted_log_visc', 'predicted_mPas'
-#     ])
+    inference_results_df = pd.read_csv(inference_results)
+    assert all(col in inference_results_df.columns for col in [
+        'compound_name', 'SMILES', 'predicted_log_visc', 'predicted_mPas'
+    ])

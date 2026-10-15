@@ -30,16 +30,6 @@ def chemberta():
     "--model-name", "-m", type=str, default=defs.DEFAULT_MODEL_NAME,
     help="Pre-trained ChemBERTa model name or path."
 )
-# @click.option(
-#     "--hidden", "-h", type=int, default=DEFAULT_HIDDEN,
-#     help="Number of hidden units in the regression head.",
-#     panel="Advanced - Model Architecture."
-# )
-# @click.option(
-#     "--dropout", "-d", type=float, default=DEFAULT_DROPOUT,
-#     help="Dropout rate in the regression head.",
-#     panel="Advanced - Model Architecture."
-# )
 @click.option(
     "--epochs", "-e", type=int, default=defs.DEFAULT_EPOCHS,
     help="Number of training epochs."
@@ -47,8 +37,6 @@ def chemberta():
 @click.option("--lr", "-l", type=float, default=defs.DEFAULT_LR, help="Learning rate for the optimizer.")
 @click.option("--batch-size", "-b", type=int, default=defs.DEFAULT_BATCH_SIZE, help="Batch size for training.")
 @click.option('-v', '--verbose', help='Verbose output', count=True)
-# @click.option_panel("Options")
-# @click.option_panel("Advanced - Model Architecture")
 def train(
         input_file, output_dir,
         train_size, random_state, model_name, epochs, lr, batch_size,
@@ -66,8 +54,6 @@ def train(
         train_size=train_size,
         random_state=random_state,
         model_name=model_name,
-        # hidden=hidden,
-        # dropout=dropout,
         epochs=epochs,
         lr=lr,
         batch_size=batch_size,

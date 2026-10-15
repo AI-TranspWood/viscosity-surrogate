@@ -30,22 +30,10 @@ def chemberta_residuals():
     "--model-name", "-m", type=str, default=defs.DEFAULT_MODEL_NAME,
     help="Pre-trained ChemBERTa model name or path."
 )
-# @click.option(
-#     "--hidden", "-h", type=int, default=DEFAULT_HIDDEN,
-#     help="Number of hidden units in the regression head."
-# )
-# @click.option(
-#     "--dropout", "-d", type=float, default=DEFAULT_DROPOUT,
-#     help="Dropout rate in the regression head."
-# )
 @click.option(
     "--epochs", "-e", type=int, default=defs.DEFAULT_EPOCHS,
     help="Number of training epochs."
 )
-# @click.option(
-#     "--n-res-blocks", "-n", type=int, default=defs.DEFAULT_N_RES_BLOCKS,
-#     help="Number of residual blocks in the model."
-# )
 @click.option("--lr", "-l", type=float, default=defs.DEFAULT_LR, help="Learning rate for the optimizer.")
 @click.option("--batch-size", "-b", type=int, default=defs.DEFAULT_BATCH_SIZE, help="Batch size for training.")
 @click.option('-v', '--verbose', help='Verbose output', count=True)
@@ -66,10 +54,7 @@ def train(
         train_size=train_size,
         random_state=random_state,
         model_name=model_name,
-        # hidden=hidden,
-        # dropout=dropout,
         epochs=epochs,
-        # n_res_blocks=n_res_blocks,
         lr=lr,
         batch_size=batch_size,
     )
@@ -85,11 +70,6 @@ def train(
     help="Path to the pre-trained ChemBERTa model file (PyTorch .pt format). If not provided, the default model included in the package will be used."
 )
 @click.option(
-    "--scaler-file", "-s",
-    type=click.Path(exists=True), default=None,
-    help="Path to the pre-trained residual scaler file (joblib .save format). If not provided, the default scaler included in the package will be used."
-) 
-@click.option(
     "--output-file", "-o",
     type=click.Path(), default="chemberta_predictions.csv",
     help="Path to save the predictions CSV file."
@@ -101,7 +81,6 @@ def train(
 @click.option('-v', '--verbose', help='Verbose output', count=True)
 def inference(
         input_file, model_file,
-        scaler_file,
         output_file,
         model_name,
         verbose
@@ -115,7 +94,6 @@ def inference(
     inference(
         input_file=input_file,
         model_file=model_file,
-        scaler_file=scaler_file,
         predictions_file=output_file,
         model_name=model_name,
     )
