@@ -101,7 +101,7 @@ def train(
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.01)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     loss_fn   = nn.MSELoss()
-    best_mae = float('inf')
+    best_loss = float('inf')
     best_state = None
     n_train = len(train_smiles)
 
@@ -127,6 +127,9 @@ def train(
             n_batches  += 1
         scheduler.step()
 
+        if total_loss < best_loss:
+            best_loss   = total_loss
+            best_state = {k: v.clone() for k, v in model.state_dict().items()}
         if (epoch + 1) % 10 == 0:
             model.eval()
             with torch.no_grad():
@@ -135,13 +138,10 @@ def train(
                     test_tokens['attention_mask'],
                     test_desc_t).squeeze().numpy()
             mae, rmse, r2 = dst.evaluate_model(test_y, test_pred)
-            if mae < best_mae:
-                best_mae   = mae
-                best_state = {k: v.clone() for k, v in model.state_dict().items()}
             logger.info(f"  Epoch {epoch+1:>4}/{epochs} | "
                   f"Loss: {total_loss/n_batches:.4f} | "
                   f"MAE: {mae:.4f} | "
-                  f"Best: {best_mae:.4f}")
+                  f"Best: {best_loss:.4f}")
 
     # Final evaluation
     model.load_state_dict(best_state)
@@ -177,14 +177,13 @@ def inference(
         model_file: str = None,
         scaler_file: str = None,
         predictions_file: str = "viscosity_inference.csv",
+        model_name: str = defs.DEFAULT_MODEL_NAME,
     ):
     """Run inference using a pre-trained ChemBERTa model with residuals."""
     if model_file is None:
         model_file = resources.files("aitw_viscosity_surrogate") / "chemberta_model_residuals.pt"
     if scaler_file is None:
         scaler_file = resources.files("aitw_viscosity_surrogate") / "chemberta_residual_scaler.save"
-
-    # logger.info(f"Using model file: {model_file}")
 
     # Defer heavy imports as late as possible to avoid unnecessary overhead when the CLI is invoked
     import torch
@@ -204,13 +203,16 @@ def inference(
     logger.info(f"Loaded scaler from '{scaler_file}'")
 
     tokenizer = AutoTokenizer.from_pretrained(defs.DEFAULT_MODEL_NAME)
-    model = ChemBERTaResidual()
+    model = ChemBERTaResidual(model_name=model_name)
     model.load_state_dict(torch.load(model_file))
     model.eval()
 
     tokens = tokenizer(smiles_list, padding=True, truncation=True, return_tensors="pt", max_length=128)
+    desc = np.array([get_descriptors(s) for s in smiles_list], dtype=np.float32)
+    desc_scaled = scaler.transform(desc).astype(np.float32)
+    desc_scaled_t = torch.FloatTensor(desc_scaled)
     with torch.no_grad():
-        log_v = model(tokens['input_ids'], tokens['attention_mask']).squeeze().numpy()
+        log_v = model(tokens['input_ids'], tokens['attention_mask'], desc_scaled_t).squeeze().numpy()
     visc = np.round(10**log_v, 4)
 
     df["predicted_log_visc"] = log_v

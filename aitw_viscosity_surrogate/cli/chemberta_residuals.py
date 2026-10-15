@@ -85,12 +85,27 @@ def train(
     help="Path to the pre-trained ChemBERTa model file (PyTorch .pt format). If not provided, the default model included in the package will be used."
 )
 @click.option(
+    "--scaler-file", "-s",
+    type=click.Path(exists=True), default=None,
+    help="Path to the pre-trained residual scaler file (joblib .save format). If not provided, the default scaler included in the package will be used."
+) 
+@click.option(
     "--output-file", "-o",
     type=click.Path(), default="chemberta_predictions.csv",
     help="Path to save the predictions CSV file."
 )
+@click.option(
+    "--model-name", "-n", type=str, default=defs.DEFAULT_MODEL_NAME,
+    help="Pre-trained ChemBERTa model name or path."
+)
 @click.option('-v', '--verbose', help='Verbose output', count=True)
-def inference(input_file, model_file, output_file, verbose):
+def inference(
+        input_file, model_file,
+        scaler_file,
+        output_file,
+        model_name,
+        verbose
+    ):
     """Run inference using a pre-trained ChemBERTa model with residuals."""
     from aitw_viscosity_surrogate.chemberta_residuals import inference
 
@@ -100,5 +115,7 @@ def inference(input_file, model_file, output_file, verbose):
     inference(
         input_file=input_file,
         model_file=model_file,
+        scaler_file=scaler_file,
         predictions_file=output_file,
+        model_name=model_name,
     )
