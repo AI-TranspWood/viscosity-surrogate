@@ -20,8 +20,8 @@ def train(
         train_size: float = 0.8,
         random_state: int = 42,
         model_name: str = defs.DEFAULT_MODEL_NAME,
-        hidden: int = defs.DEFAULT_HIDDEN,
-        dropout: float = defs.DEFAULT_DROPOUT,
+        # hidden: int = defs.DEFAULT_HIDDEN,
+        # dropout: float = defs.DEFAULT_DROPOUT,
         epochs: int = defs.DEFAULT_EPOCHS,
         lr: float = defs.DEFAULT_LR,
         batch_size: int = defs.DEFAULT_BATCH_SIZE,
@@ -60,7 +60,7 @@ def train(
     test_y       = df["log_visc_exp"].iloc[test_idx].values.astype(np.float32)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = ChemBERTaViscosity(model_name=model_name, hidden=hidden, dropout=dropout)
+    model = ChemBERTaViscosity(model_name=model_name)
     logger.info(f"Loaded ChemBERTa model '{model_name}' with {sum(p.numel() for p in model.parameters()):,} parameters.")
     logger.debug(f"Model architecture:\n{model}")
 
@@ -138,6 +138,7 @@ def inference(
         input_file: str,
         model_file: str = None,
         predictions_file: str = "viscosity_inference.csv",
+        model_name: str = defs.DEFAULT_MODEL_NAME,
     ):
     """Run inference using a pre-trained ChemBERTa model."""
     if model_file is None:
@@ -162,7 +163,7 @@ def inference(
     smiles_list = df["SMILES"].tolist()
 
     tokenizer = AutoTokenizer.from_pretrained(defs.DEFAULT_MODEL_NAME)
-    model = ChemBERTaViscosity()
+    model = ChemBERTaViscosity(model_name=model_name)
     model.load_state_dict(torch.load(model_file))
     model.eval()
 

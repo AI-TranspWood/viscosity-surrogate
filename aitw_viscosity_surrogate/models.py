@@ -16,10 +16,12 @@ class ChemBERTaViscosity(nn.Module):
     def __init__(
             self,
             model_name: str = defs.DEFAULT_MODEL_NAME,
-            hidden: int = defs.DEFAULT_HIDDEN,
-            dropout: float = defs.DEFAULT_DROPOUT,
+            # hidden: int = defs.DEFAULT_HIDDEN,
+            # dropout: float = defs.DEFAULT_DROPOUT,
         ):
         super().__init__()
+        hidden = defs.DEFAULT_HIDDEN
+        dropout = defs.DEFAULT_DROPOUT
         self.chemberta = AutoModel.from_pretrained(model_name)
         self.predictor = nn.Sequential(
             nn.Linear(defs.DEFAULT_CHEMBERTA_DIM, hidden),  # 768 = ChemBERTa output size
@@ -96,15 +98,19 @@ class ChemBERTaResidual(nn.Module):
     def __init__(
             self,
             model_name: str = defs.DEFAULT_MODEL_NAME,
-            hidden: int = defs.DEFAULT_HIDDEN_DIM,
-            dropout: float = defs.DEFAULT_DROPOUT,
+            # hidden: int = defs.DEFAULT_HIDDEN_DIM,
+            # dropout: float = defs.DEFAULT_DROPOUT,
             # combined_dim: int = defs.DEFAULT_COMBINED_DIM,
             # n_desc: int = defs.DEFAULT_N_DESC,
-            n_res_blocks: int = defs.DEFAULT_N_RES_BLOCKS,
+            # n_res_blocks: int = defs.DEFAULT_N_RES_BLOCKS,
         ):
         super().__init__()
 
+        hidden = defs.DEFAULT_HIDDEN_DIM
+        dropout = defs.DEFAULT_DROPOUT
+        combined_dim = defs.DEFAULT_COMBINED_DIM
         n_desc = defs.DEFAULT_N_DESC
+        n_res_blocks = defs.DEFAULT_N_RES_BLOCKS
 
         # PATH 1: ChemBERTa reads SMILES like language
         self.chemberta = AutoModel.from_pretrained(model_name)
@@ -119,7 +125,7 @@ class ChemBERTaResidual(nn.Module):
 
         # COMBINE: project 394 → HIDDEN_DIM
         self.input_proj = nn.Sequential(
-            nn.Linear(defs.DEFAULT_COMBINED_DIM, hidden),
+            nn.Linear(combined_dim, hidden),
             nn.BatchNorm1d(hidden),
             nn.ReLU(),
             nn.Dropout(dropout),

@@ -1,9 +1,8 @@
 """AITW Monomer Viscosity Surrogate CLI commands"""
 import logging
 
+from .. import defaults as defs
 from .. import loggers as lg
-from ..defaults import (DEFAULT_BATCH_SIZE, DEFAULT_DROPOUT, DEFAULT_EPOCHS,
-                        DEFAULT_HIDDEN, DEFAULT_LR, DEFAULT_MODEL_NAME)
 from .main import cli, click
 from .utils import verbose_map
 
@@ -28,27 +27,31 @@ def chemberta():
 )
 @click.option("--random-state", "-r", type=int, default=42, help="Random seed for reproducibility.")
 @click.option(
-    "--model-name", "-m", type=str, default=DEFAULT_MODEL_NAME,
+    "--model-name", "-m", type=str, default=defs.DEFAULT_MODEL_NAME,
     help="Pre-trained ChemBERTa model name or path."
 )
+# @click.option(
+#     "--hidden", "-h", type=int, default=DEFAULT_HIDDEN,
+#     help="Number of hidden units in the regression head.",
+#     panel="Advanced - Model Architecture."
+# )
+# @click.option(
+#     "--dropout", "-d", type=float, default=DEFAULT_DROPOUT,
+#     help="Dropout rate in the regression head.",
+#     panel="Advanced - Model Architecture."
+# )
 @click.option(
-    "--hidden", "-h", type=int, default=DEFAULT_HIDDEN,
-    help="Number of hidden units in the regression head."
-)
-@click.option(
-    "--dropout", "-d", type=float, default=DEFAULT_DROPOUT,
-    help="Dropout rate in the regression head."
-)
-@click.option(
-    "--epochs", "-e", type=int, default=DEFAULT_EPOCHS,
+    "--epochs", "-e", type=int, default=defs.DEFAULT_EPOCHS,
     help="Number of training epochs."
 )
-@click.option("--lr", "-l", type=float, default=DEFAULT_LR, help="Learning rate for the optimizer.")
-@click.option("--batch-size", "-b", type=int, default=DEFAULT_BATCH_SIZE, help="Batch size for training.")
+@click.option("--lr", "-l", type=float, default=defs.DEFAULT_LR, help="Learning rate for the optimizer.")
+@click.option("--batch-size", "-b", type=int, default=defs.DEFAULT_BATCH_SIZE, help="Batch size for training.")
 @click.option('-v', '--verbose', help='Verbose output', count=True)
+# @click.option_panel("Options")
+# @click.option_panel("Advanced - Model Architecture")
 def train(
         input_file, output_dir,
-        train_size, random_state, model_name, hidden, dropout, epochs, lr, batch_size,
+        train_size, random_state, model_name, epochs, lr, batch_size,
         verbose
     ):
     """Train and evaluate a ChemBERTa model on the viscosity dataset."""
@@ -63,8 +66,8 @@ def train(
         train_size=train_size,
         random_state=random_state,
         model_name=model_name,
-        hidden=hidden,
-        dropout=dropout,
+        # hidden=hidden,
+        # dropout=dropout,
         epochs=epochs,
         lr=lr,
         batch_size=batch_size,

@@ -22,9 +22,9 @@ def train(
         random_state: int = 42,
 
         model_name: str = defs.DEFAULT_MODEL_NAME,
-        hidden: int = defs.DEFAULT_HIDDEN,
-        dropout: float = defs.DEFAULT_DROPOUT,
-        n_res_blocks: int = defs.DEFAULT_N_RES_BLOCKS,
+        # hidden: int = defs.DEFAULT_HIDDEN,
+        # dropout: float = defs.DEFAULT_DROPOUT,
+        # n_res_blocks: int = defs.DEFAULT_N_RES_BLOCKS,
 
         epochs: int = defs.DEFAULT_EPOCHS,
         lr: float = defs.DEFAULT_LR,
@@ -66,13 +66,11 @@ def train(
     test_y       = df["log_visc_exp"].iloc[test_idx].values.astype(np.float32)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = ChemBERTaResidual(
-        model_name=model_name, hidden=hidden, dropout=dropout, n_res_blocks=n_res_blocks
-    )
+    model = ChemBERTaResidual(model_name=model_name)
     params = sum(p.numel() for p in model.parameters())
     logger.info(
         f"Loaded ChemBERTa model with residuals '{model_name}' with {params:,} parameters "
-        f"and {n_res_blocks} residual blocks."
+        f"and {defs.DEFAULT_N_RES_BLOCKS} residual blocks."
     )
     logger.debug(f"Model architecture:\n{model}")
 
