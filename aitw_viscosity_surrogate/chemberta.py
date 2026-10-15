@@ -40,6 +40,9 @@ def train(
 
     from .models import ChemBERTaViscosity
 
+    torch.manual_seed(random_state)
+    np.random.seed(random_state)
+
     logfile = os.path.join(output_dir, "training.log")
     plot_file = os.path.join(output_dir, "viscosity_performance.png")
     indexes_file = os.path.join(output_dir, "train_test_indexes.json")
@@ -126,7 +129,12 @@ def train(
     dst.save_predictions(df, test_idx, test_y, test_pred, predictions_file)
 
     # Save model
-    torch.save(model.state_dict(), model_file)
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "model_name": model_name
+        }, model_file
+    )
     indexes = {"train_idx": train_idx.tolist(), "test_idx": test_idx.tolist()}
     with open(indexes_file, "w") as f:
         json.dump(indexes, f, indent=4)
@@ -138,7 +146,6 @@ def inference(
         input_file: str,
         model_file: str = None,
         predictions_file: str = "viscosity_inference.csv",
-        model_name: str = defs.DEFAULT_MODEL_NAME,
     ):
     """Run inference using a pre-trained ChemBERTa model."""
     if model_file is None:
@@ -163,8 +170,14 @@ def inference(
     smiles_list = df["SMILES"].tolist()
 
     tokenizer = AutoTokenizer.from_pretrained(defs.DEFAULT_MODEL_NAME)
+    checkpoint = torch.load(model_file, weights_only=False)
+    if 'model_name' not in checkpoint:
+        logger.error(f"Loaded model checkpoint is not a valid dictionary with 'model_name'.")
+        sys.exit(1)
+    model_name = checkpoint['model_name']
+    state_dict = checkpoint['model_state_dict']
     model = ChemBERTaViscosity(model_name=model_name)
-    model.load_state_dict(torch.load(model_file))
+    model.load_state_dict(state_dict)
     model.eval()
 
     tokens = tokenizer(smiles_list, padding=True, truncation=True, return_tensors="pt", max_length=128)

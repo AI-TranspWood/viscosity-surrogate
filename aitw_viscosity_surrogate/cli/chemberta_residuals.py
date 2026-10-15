@@ -74,15 +74,10 @@ def train(
     type=click.Path(), default="chemberta_predictions.csv",
     help="Path to save the predictions CSV file."
 )
-@click.option(
-    "--model-name", "-n", type=str, default=defs.DEFAULT_MODEL_NAME,
-    help="Pre-trained ChemBERTa model name or path."
-)
 @click.option('-v', '--verbose', help='Verbose output', count=True)
 def inference(
         input_file, model_file,
         output_file,
-        model_name,
         verbose
     ):
     """Run inference using a pre-trained ChemBERTa model with residuals."""
@@ -95,5 +90,4 @@ def inference(
         input_file=input_file,
         model_file=model_file,
         predictions_file=output_file,
-        model_name=model_name,
     )

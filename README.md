@@ -39,15 +39,9 @@ You can also add it to either `~/.bashrc` or, if you are using a virtual environ
 
 ## Approaches
 
-### 1. Baseline: XGBoost with Molecular Fingerprints and Descriptors
+### Dataset format
 
-The first approach represents a classical cheminformatics pipeline in which each molecule is converted into a fixed-length numerical vector composed of a 2048-bit Morgan fingerprint and the full set of RDKit-computed physicochemical descriptors, including molecular weight, polarity, hydrogen-bonding capacity, and topological complexity.
-These features are fed into an XGBoost gradient-boosted tree regressor, which learns nonlinear relationships between molecular structure and log-viscosity without requiring any deep learning.
-This approach serves as a strong, interpretable baseline against which more complex models can be compared.
-
-#### Training
-
-Training the XGBoost model is done using the `train` command, which takes as input a CSV file containing the following columns:
+For all approaches, the input dataset must be a CSV file containing the following columns:
 
 - `compound_name`: The name of the compound.
 - `SMILES`: The SMILES representation of the compound.
@@ -55,6 +49,15 @@ Training the XGBoost model is done using the `train` command, which takes as inp
 - `log_visc_exp`: The experimentally measured log-viscosity of the compound.
 - `visc_mPas_calc`: The calculated viscosity of the compound in mPa·s.
 - `visc_mPas_exp`: The experimentally measured viscosity of the compound in mPa·
+
+
+### 1. Baseline: XGBoost with Molecular Fingerprints and Descriptors
+
+The first approach represents a classical cheminformatics pipeline in which each molecule is converted into a fixed-length numerical vector composed of a 2048-bit Morgan fingerprint and the full set of RDKit-computed physicochemical descriptors, including molecular weight, polarity, hydrogen-bonding capacity, and topological complexity.
+These features are fed into an XGBoost gradient-boosted tree regressor, which learns nonlinear relationships between molecular structure and log-viscosity without requiring any deep learning.
+This approach serves as a strong, interpretable baseline against which more complex models can be compared.
+
+#### Training
 
 ```bash
 aitw-viscosity-surrogate xgboost train --help
@@ -64,10 +67,10 @@ aitw-viscosity-surrogate xgboost train \
 
 The output of the training command contains the following files:
 
-- {output_dir}/xgboost_model.json: The trained XGBoost model in JSON format.
-- {output_dir}/viscosity_performance.png: A plot of predicted vs. experimental log-viscosity values for the training set.
-- {output_dir}/viscosity_predictions.csv: A CSV file containing the predicted log-viscosity values and errors for the training set.
-- {output_dir}/training.log: A log file containing the training process.
+- `{output_dir}/xgboost_model.json`: The trained XGBoost model in JSON format.
+- `{output_dir}/viscosity_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
+- `{output_dir}/viscosity_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
+- `{output_dir}/training.log`: A log file containing the training process.
 
 #### Inference
 
@@ -97,6 +100,20 @@ The second approach treats each molecule's SMILES string as a sentence in a chem
 
 #### Training
 
+```bash
+aitw-viscosity-surrogate chemberta train --help
+aitw-viscosity-surrogate chemberta train \
+  --input-file examples/dataset.csv
+```
+
+The output of the training command contains the following files:
+
+- `{output_dir}/chemberta_model_base.pt`: The trained ChemBERTa model in PyTorch format. This will be a dictionary containing the `model_state_dict` and the ChemBERTa model name used for training (`model_name`).
+- `{output_dir}/viscosity_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
+- `{output_dir}/viscosity_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
+- `{output_dir}/training.log`: A log file containing the training process.
+- `{output_dir}/train_test_indexes.json`: A JSON file containing the indexes of the training and test sets used for training and validation.
+
 #### Inference
 
 Inference can be ran using a pre-trained model included in the package or a custom model trained using the `train` command.
@@ -115,7 +132,6 @@ aitw-viscosity-surrogate chemberta inference \
 It will produce a CSV file containing the predicted log-viscosity values for the input compounds.
 
 The `chemberta_model_base.pt` file included in the package was trained on the dataset provided in `examples/dataset.csv`.
-<!-- It's validation is shown [in this plot](./images/chemberta_train.png). -->
 
 ![ChemBERTa base training performance](./images/chemberta_train.png)
 
@@ -126,7 +142,41 @@ The third approach combines the strengths of the previous two methods by fusing 
 
 #### Training
 
+```bash
+aitw-viscosity-surrogate chemberta-residuals train --help
+aitw-viscosity-surrogate chemberta-residuals train \
+  --input-file examples/dataset.csv
+```
+
+The output of the training command contains the following files:
+
+- `{output_dir}/chemberta_model_residuals.pt`: The trained ChemBERTa model in PyTorch format. This will be a dictionary containing the `model_state_dict`, the ChemBERTa model name used for training (`model_name`) and the scaler (`scaler`).
+- `{output_dir}/viscosity_performance.png`: A plot of predicted vs. experimental log-viscosity values for the training set.
+- `{output_dir}/viscosity_predictions.csv`: A CSV file containing the predicted log-viscosity values and errors for the training set.
+- `{output_dir}/training.log`: A log file containing the training process.
+- `{output_dir}/train_test_indexes.json`: A JSON file containing the indexes of the training and test sets used for training and validation.
+
 #### Inference
+
+Inference can be ran using a pre-trained model included in the package or a custom model trained using the `train` command.
+The input file must be a CSV file containing the following columns:
+- `compound_name`: The name of the compound.
+- `SMILES`: The SMILES representation of the compound.
+- `visc_mPas_exp`: OPTIONAL. The reference viscosity of the compound in mPa·s. If provided, the error between predicted and reference values will be calculated and included in the output.
+
+```bash
+aitw-viscosity-surrogate chemberta-residuals inference --help
+aitw-viscosity-surrogate chemberta-residuals inference \
+  --input-file examples/dataset.csv \
+  --output-file chemberta_residuals_predictions.csv
+```
+
+It will produce a CSV file containing the predicted log-viscosity values for the input compounds.
+
+The `chemberta_model_residuals.pt` file included in the package was trained on the dataset provided in `examples/dataset.csv`.
+
+![ChemBERTa residual training performance](./images/chemberta_res_train.png)
+
 
 ### 4. Ensemble: Combining XGBoost and Two ChemBERTa Variants
 

@@ -41,6 +41,9 @@ def train(
 
     from .models import ChemBERTaResidual, get_descriptors
 
+    torch.manual_seed(random_state)
+    np.random.seed(random_state)
+
     logfile = os.path.join(output_dir, "training.log")
     plot_file = os.path.join(output_dir, "viscosity_performance.png")
     indexes_file = os.path.join(output_dir, "train_test_indexes.json")
@@ -156,6 +159,7 @@ def train(
     torch.save(
         {
             "model_state_dict": model.state_dict(),
+            "model_name": model_name,
             "scaler": scaler
         },
         model_file
@@ -171,7 +175,6 @@ def inference(
         input_file: str,
         model_file: str = None,
         predictions_file: str = "viscosity_inference.csv",
-        model_name: str = defs.DEFAULT_MODEL_NAME,
     ):
     """Run inference using a pre-trained ChemBERTa model with residuals."""
     if model_file is None:
@@ -189,9 +192,14 @@ def inference(
     tokenizer = AutoTokenizer.from_pretrained(defs.DEFAULT_MODEL_NAME)
     checkpoint = torch.load(model_file, weights_only=False)
     if 'scaler' not in checkpoint:
-        logger.error(f"Loaded model checkpoint is not a valid dictionary with 'scaler'. {type(checkpoint)}: {checkpoint.keys()}")
+        logger.error(f"Loaded model checkpoint is not a valid dictionary with 'scaler'.")
         sys.exit(1)
-    model = ChemBERTaResidual(model_name=model_name, scaler=checkpoint['scaler'])
+    if 'model_name' not in checkpoint:
+        logger.error(f"Loaded model checkpoint is not a valid dictionary with 'model_name'.")
+        sys.exit(1)
+    scaler = checkpoint['scaler']
+    model_name = checkpoint['model_name']
+    model = ChemBERTaResidual(model_name=model_name, scaler=scaler)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 
