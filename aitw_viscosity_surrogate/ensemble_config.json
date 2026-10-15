@@ -1,5 +1,5 @@
 {
     "xgb_weight": 0.7000000000000002,
-    "llm_simple_weight": 0.2,
-    "llm_residual_weight": 0.1
+    "chemberta_base_weight": 0.2,
+    "chemberta_residual_weight": 0.1
 }
