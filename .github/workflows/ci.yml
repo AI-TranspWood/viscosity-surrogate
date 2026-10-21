@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "aitw_viscosity_surrogate/**"
+      - "pyproject.toml"
+      - ".github/workflows/ci.yml"
+      - "examples/**"
+      - "tests/**"
+  pull_request:
+
+concurrency:
+  group: ${{format('{0}:{1}:{2}', github.repository, github.ref, github.workflow)}}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ matrix.python-version }}-tests-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: pip-${{ matrix.python-version }}-tests
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Python dependencies
+        run: pip install .[tests]
+
+      - name: Run tests
+        run: |
+          pytest -sv --disable-warnings
+
+  test-eessi:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up EESSI environment
+        uses: eessi/github-action-eessi@v3
+        with:
+          eessi_stack_version: '2023.06'
+
+      - name: Test building with EESSI
+        run: |
+          module load EESSI-extend
+          unset EASYBUILD_DEBUG
+          eb --logtostdout --software-commit=$GITHUB_SHA .github/ci.eb
