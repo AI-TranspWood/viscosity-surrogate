@@ -68,6 +68,6 @@ jobs:
         run: |
           module load EESSI-extend
           unset EASYBUILD_DEBUG
-          eb XGBoost-2.0.2-gfbf-2023a.eb
-          eb Transformers-4.39.3-gfbf-2023a.eb
+          eb -r XGBoost-2.0.2-gfbf-2023a.eb
+          eb -r Transformers-4.39.3-gfbf-2023a.eb
           eb --logtostdout --software-commit=$GITHUB_SHA .github/ci.eb --rebuild
