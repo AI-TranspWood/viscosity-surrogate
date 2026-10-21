@@ -57,8 +57,17 @@ jobs:
         with:
           eessi_stack_version: '2023.06'
 
+      - name: Cache deps built on top of EESSI
+        uses: actions/cache@v3
+        with:
+          path: ~/eessi
+          key: eessi-builds-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: eessi-builds
+
       - name: Test building with EESSI
         run: |
           module load EESSI-extend
           unset EASYBUILD_DEBUG
-          eb --logtostdout --software-commit=$GITHUB_SHA .github/ci.eb
+          eb XGBoost-2.0.2-gfbf-2023a.eb
+          eb Transformers-4.39.3-gfbf-2023a.eb
+          eb --logtostdout --software-commit=$GITHUB_SHA .github/ci.eb --rebuild
