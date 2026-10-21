@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.urls]
-Source = "TODO: add source code URL"
+Source = "https://github.com/AI-TranspWood/viscosity-surrogate"
 
 [project.optional-dependencies]
 tests = [
