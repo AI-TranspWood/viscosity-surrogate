@@ -29,7 +29,7 @@ dependencies = [
     "scipy",
     "pandas",
     "matplotlib",
-    "rdkit",
+    "rdkit>=2024,<2027",
     # ML/DL
     "xgboost",
     "torch",

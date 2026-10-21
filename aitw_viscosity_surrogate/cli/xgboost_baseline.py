@@ -25,8 +25,12 @@ def xgboost():
     help="Proportion of the dataset to use for the training set (between 0 and 1)."
 )
 @click.option("--random-state", "-r", type=int, default=42, help="Random seed for reproducibility.")
+@click.option(
+    "--compatibility/--no-compatibility", default=True,
+    help="Use compatibility with older version of RDKit that define less descriptors."
+)
 @click.option('-v', '--verbose', help='Verbose output', count=True)
-def train(input_file, output_dir, train_size, random_state, verbose):
+def train(input_file, output_dir, train_size, random_state, compatibility, verbose):
     """Train and evaluate an XGBoost model on the viscosity dataset."""
     from aitw_viscosity_surrogate.xgboost import train
 
@@ -38,6 +42,7 @@ def train(input_file, output_dir, train_size, random_state, verbose):
         output_dir=output_dir,
         train_size=train_size,
         random_state=random_state,
+        compatibility=compatibility,
     )
 
 @xgboost.command()
@@ -55,8 +60,12 @@ def train(input_file, output_dir, train_size, random_state, verbose):
     type=click.Path(), default="xgboost_predictions.csv",
     help="Path to save the predictions CSV file."
 )
+@click.option(
+    "--compatibility/--no-compatibility", default=True,
+    help="Use compatibility with older version of RDKit that define less descriptors."
+)
 @click.option('-v', '--verbose', help='Verbose output', count=True)
-def inference(input_file, model_file, output_file, verbose):
+def inference(input_file, model_file, output_file, compatibility, verbose):
     """Run inference using a pre-trained XGBoost model."""
     from aitw_viscosity_surrogate.xgboost import inference
 
@@ -67,4 +76,5 @@ def inference(input_file, model_file, output_file, verbose):
         input_file=input_file,
         model_file=model_file,
         predictions_file=output_file,
+        compatibility=compatibility,
     )

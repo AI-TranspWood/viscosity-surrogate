@@ -8,6 +8,7 @@ import numpy as np
 from . import dataset as dst
 from . import defaults as defs
 from . import loggers as lg
+from .utils import numpy_1x_compatibility
 
 os.environ.setdefault('TOKENIZERS_PARALLELISM', 'false')
 
@@ -184,6 +185,8 @@ def load_from_file(model_file: str):
     """Load a pre-trained ChemBERTa model with residuals from a file."""
     if model_file is None:
         model_file = resources.files("aitw_viscosity_surrogate") / "chemberta_model_residuals.pt"
+
+    numpy_1x_compatibility()
 
     # Defer heavy imports as late as possible to avoid unnecessary overhead when the CLI is invoked
     import torch

@@ -70,6 +70,10 @@ def test_cli_chemberta_res_inference_with_default_weights(dataset_file_path, tmp
         '--output-file', inference_results,
     ])
 
+    if result.exit_code != 0:
+        print(result.output)
+        print(result.exception)
+        raise result.exception
     assert result.exit_code == 0
     assert os.path.exists(inference_results)
 
