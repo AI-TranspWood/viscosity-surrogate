@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 from importlib import resources
 
 import numpy as np
@@ -19,6 +18,7 @@ def train(
         output_dir: str = "xgboost_baseline_output",
         desc_func=dst.get_all_descriptors,
         fp_func=dst.get_fingerprint_morgan,
+        compatibility: bool = False,
     ):
     """Train the XGBoost model on the dataset."""
     if os.path.exists(output_dir):
@@ -39,7 +39,7 @@ def train(
     df = dst.load_data(input_file)
 
     # 2. Build features
-    X = dst.build_xgboost_features(df, desc_func=desc_func, fp_func=fp_func)
+    X = dst.build_xgboost_features(df, desc_func=desc_func, fp_func=fp_func, compatibility=compatibility)
     y = df["log_visc_exp"].values
 
     # 3. Split
@@ -122,7 +122,8 @@ def load_from_file(model_file: str):
 def inference(
         input_file: str,
         model_file: str = None,
-        predictions_file: str = "viscosity_inference.csv"
+        predictions_file: str = "viscosity_inference.csv",
+        compatibility: bool = False,
     ):
     """Run inference using a pre-trained XGBoost model."""
     if os.path.exists(predictions_file):
@@ -135,7 +136,7 @@ def inference(
     df = dst.load_data(input_file)
 
     # 2. Build features
-    X = dst.build_xgboost_features(df)
+    X = dst.build_xgboost_features(df, compatibility=compatibility,)
 
     # 3. Load model
     model = load_from_file(model_file)

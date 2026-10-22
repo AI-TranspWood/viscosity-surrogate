@@ -19,8 +19,6 @@ def train(
         train_size: float = 0.8,
         random_state: int = 42,
         model_name: str = defs.DEFAULT_MODEL_NAME,
-        # hidden: int = defs.DEFAULT_HIDDEN,
-        # dropout: float = defs.DEFAULT_DROPOUT,
         epochs: int = defs.DEFAULT_EPOCHS,
         lr: float = defs.DEFAULT_LR,
         batch_size: int = defs.DEFAULT_BATCH_SIZE,

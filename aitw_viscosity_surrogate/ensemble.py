@@ -157,7 +157,7 @@ def inference(
         chemberta_base_model_file: str = None,
         chemberta_residuals_model_file: str = None,
         ensemble_config_file: str = None,
-        predictions_file: str = "viscosity_inference.csv"
+        predictions_file: str = "viscosity_inference.csv",
     ):
     """Run the inference using the 3 trained models and give the best combination of weights for the ensemble."""
     if ensemble_config_file is None:

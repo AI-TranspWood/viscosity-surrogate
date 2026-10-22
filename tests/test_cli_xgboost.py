@@ -22,9 +22,8 @@ from click.testing import CliRunner
 #     assert result.exit_code == 1
 #     assert 'already exists' in caplog.text
 
-
 def test_cli_xgboost_train_and_inference(dataset_file_path, tmpdir):
-    """Test the CLI train command."""
+    """Test the CLI train command + inference with."""
     from aitw_viscosity_surrogate.cli import cli
 
     tmp_output_dir = tmpdir / "output"
@@ -46,6 +45,41 @@ def test_cli_xgboost_train_and_inference(dataset_file_path, tmpdir):
         '--input-file', dataset_file_path,
         '--model-file', output_weights_file,
         '--output-file', inference_results,
+    ])
+
+    assert result.exit_code == 0
+    assert os.path.exists(inference_results)
+
+    inference_results_df = pd.read_csv(inference_results)
+    assert all(col in inference_results_df.columns for col in [
+        'compound_name', 'SMILES', 'predicted_log_visc', 'predicted_mPas'
+    ])
+
+def test_cli_xgboost_train_and_inference_nocompat(dataset_file_path, tmpdir):
+    """Test the CLI train command + inference with no compatibility."""
+    from aitw_viscosity_surrogate.cli import cli
+
+    tmp_output_dir = tmpdir / "output"
+
+    runner = CliRunner()
+    output_weights_file = os.path.join(tmp_output_dir, "xgboost_model.json")
+    result = runner.invoke(cli, [
+        'xgboost', 'train',
+        '--input-file', dataset_file_path,
+        '--output-dir', str(tmp_output_dir),
+        '--no-compatibility',
+    ])
+
+    assert result.exit_code == 0
+    assert os.path.exists(output_weights_file)
+
+    inference_results = os.path.join(tmpdir, 'inference_results.csv')
+    result = runner.invoke(cli, [
+        'xgboost', 'inference',
+        '--input-file', dataset_file_path,
+        '--model-file', output_weights_file,
+        '--output-file', inference_results,
+        '--no-compatibility',
     ])
 
     assert result.exit_code == 0

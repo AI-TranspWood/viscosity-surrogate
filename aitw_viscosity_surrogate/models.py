@@ -44,7 +44,7 @@ class ChemBERTaViscosity(nn.Module):
         return self.predictor(cls_token)
 
 
-def get_descriptors(smiles):
+def get_descriptors(smiles, compatibility: bool = False) -> np.ndarray:
     mol = Chem.MolFromSmiles(smiles)
     n_desc = len(defs.RDKIT_DESC_NAMES)  # 10
     if mol is None:

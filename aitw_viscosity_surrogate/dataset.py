@@ -1,13 +1,9 @@
-import os
-import sys
-from importlib import resources
 from typing import Callable
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from rdkit import Chem
 from rdkit.Chem import AllChem, Descriptors
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -33,10 +29,20 @@ def load_data(input_file: str) -> pd.DataFrame:
     data = pd.read_csv(input_file)
     return data
 
+EXCLUDE_NAMES = {
+    "FpDensityMorgan1", "FpDensityMorgan2", "FpDensityMorgan3",
+}
+EXCLUDE_NAMES_COMPAT = {
+    # Excluded for compatibility with older RDKit versions (>= 2024.x) that don't have these descriptors
+    'NumAmideBonds', 'NumHeterocycles', 'NumUnspecifiedAtomStereoCenters', 'Phi', 'NumAtomStereoCenters',
+    'NumSpiroAtoms', 'NumBridgeheadAtoms',
+}
+
+
 # --------------------------------------------------------------------------- #
 # Step 2: Convert molecule to numbers
 # --------------------------------------------------------------------------- #
-def get_all_descriptors(smiles: str) -> np.ndarray:
+def get_all_descriptors(smiles: str, compatibility: bool = False) -> np.ndarray:
     """
     Compute ALL RDKit descriptors for one molecule.
 
@@ -71,11 +77,12 @@ def get_all_descriptors(smiles: str) -> np.ndarray:
     # compute all descriptors
     values = []
     # names  = []
+    exclude = EXCLUDE_NAMES.copy()
+    if compatibility:
+        exclude |= EXCLUDE_NAMES_COMPAT
     for name, func in Descriptors._descList:
         # skip fingerprint density — not useful
-        if name in {"FpDensityMorgan1",
-                    "FpDensityMorgan2",
-                    "FpDensityMorgan3"}:
+        if name in exclude:
             continue
         try:
             val = func(mol)
@@ -105,6 +112,7 @@ def build_xgboost_features(
         df: pd.DataFrame,
         desc_func: Callable[[str], np.ndarray] = get_all_descriptors,
         fp_func: Callable[[str], np.ndarray] = get_fingerprint_morgan,
+        compatibility: bool = False,
     ) -> np.ndarray:
     """
     Build feature matrix:
@@ -119,7 +127,7 @@ def build_xgboost_features(
 
     for smi in df["SMILES"]:
         fp = fp_func(smi)
-        desc = desc_func(smi)
+        desc = desc_func(smi, compatibility=compatibility)
         fingerprints.append(fp)
         descriptors.append(desc)
 

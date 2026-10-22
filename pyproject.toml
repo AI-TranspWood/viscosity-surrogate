@@ -29,7 +29,7 @@ dependencies = [
     "scipy",
     "pandas",
     "matplotlib",
-    "rdkit",
+    "rdkit>=2024,<2027",
     # ML/DL
     "xgboost",
     "torch",
@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.urls]
-Source = "TODO: add source code URL"
+Source = "https://github.com/AI-TranspWood/viscosity-surrogate"
 
 [project.optional-dependencies]
 tests = [

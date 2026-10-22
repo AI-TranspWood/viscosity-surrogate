@@ -42,6 +42,10 @@ def test_cli_ensemble_train_and_inference(dataset_file_path, tmpdir):
         '--batch-size', '4',
     ])
 
+    if result.exit_code != 0:
+        print(result.output)
+        print(result.exception)
+        raise result.exception
     assert result.exit_code == 0
     assert os.path.exists(xgb_weights_file)
     assert os.path.exists(chemberta_base_weights_file)
