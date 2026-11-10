@@ -10,6 +10,11 @@ on:
         description: Tag to deploy
         required: true
         type: string
+      skip-testpypi:
+        description: Skip publishing to TestPyPI
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   pypi:
@@ -29,6 +34,7 @@ jobs:
         run: pip install flit
 
       - name: Build and publish on test PyPI
+        if: ${{ !inputs.skip-testpypi }}
         run: >
           flit publish
         env:
@@ -45,11 +51,11 @@ jobs:
       - name: Test install from TestPyPI
         uses: nick-fields/retry@v2
         with:
-          max_attempts: 3
+          max_attempts: 6
           retry_on: error
-          timeout_minutes: 10
+          timeout_minutes: 15
           command: >-
-            sleep 10 &&
+            sleep 20 &&
             pip install
             --index-url https://test.pypi.org/simple/
             --extra-index-url https://pypi.org/simple/
